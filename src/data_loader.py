@@ -1,81 +1,50 @@
-import os
+"""Reader for the Reuters-21578 corpus (.sgm files).
+
+* Train / test split taken from the LEWISSPLIT attribute ("TRAIN" / "TEST").
+  Documents marked "NOT-USED" are skipped.
+* Only the FIRST topic of each document is used as its label, as required by
+  the project specification (<D>money-fx</D><D>dlr</D> -> "money-fx").
+* Documents without topics or without text are skipped.
+"""
+
 import glob
+import os
+
 from bs4 import BeautifulSoup
 
+
 def load_reuters_dataset(data_dir):
-    """
-    Reads the .sgm files from the Reuters-21578 corpus.
-    Returns the texts and labels separated into Train and Test according to LEWISSPLIT.
-    """
-    train_texts, train_labels = [], []
-    test_texts, test_labels = [], []
-
-    # Search for all .sgm files in your unzipped folder
-    sgm_files = glob.glob(os.path.join(data_dir, "*.sgm"))
-    
+    """Return (train_texts, train_labels, test_texts, test_labels)."""
+    sgm_files = sorted(glob.glob(os.path.join(data_dir, "*.sgm")))
     if not sgm_files:
-        raise FileNotFoundError(f"No .sgm files found in {data_dir}")
+        raise FileNotFoundError(
+            f"No .sgm files found in '{data_dir}'. Run: python scripts/download_data.py"
+        )
 
-    for file_path in sgm_files:
-        # The corpus usually has special characters, latin-1 prevents reading crashes
-        with open(file_path, 'r', encoding='latin-1', errors='ignore') as f:
-            content = f.read()
+    split = {"TRAIN": ([], []), "TEST": ([], [])}
+    for path in sgm_files:
+        # The corpus contains some non-UTF-8 bytes; latin-1 reads every file.
+        with open(path, encoding="latin-1") as f:
+            soup = BeautifulSoup(f.read(), "html.parser")
 
-        # Parse the SGML using BeautifulSoup
-        soup = BeautifulSoup(content, 'html.parser')
-        
-        # Find all documents within the file
-        documents = soup.find_all('reuters')
-
-        for doc in documents:
-            # --- 1. REQUIREMENT: Train / Test split ---
-            lewis_split = doc.get('lewissplit', '').upper()
-            if lewis_split not in ["TRAIN", "TEST"]:
-                continue  # Ignore documents that are not Train or Test (e.g., "NOT-USED")
-
-            # --- 2. REQUIREMENT: Only the first class ---
-            topics_tag = doc.find('topics')
-            if not topics_tag:
+        for doc in soup.find_all("reuters"):
+            part = doc.get("lewissplit", "").upper()
+            if part not in split:
                 continue
-                
-            # Look for <d> tags inside <topics>
-            d_tags = topics_tag.find_all('d')
-            if not d_tags:
-                continue  # Ignore documents without a category
-                
-            # Strictly take the first element, e.g.: <d>money-fx</d> -> "money-fx"
-            first_label = d_tags[0].text.strip()
-
-            # 3. Text extraction 
-            text_node = doc.find('text')
-            if not text_node:
+            topics = doc.find("topics")
+            first = topics.find("d") if topics else None
+            text_node = doc.find("text")
+            if first is None or text_node is None:
                 continue
 
-            # The useful text is usually divided between the title and the body
-            title = text_node.find('title').text.strip() if text_node.find('title') else ""
-            body = text_node.find('body').text.strip() if text_node.find('body') else ""
-            
-            full_text = f"{title} {body}".strip()
-            if not full_text:
+            title = text_node.find("title")
+            body = text_node.find("body")
+            text = " ".join(n.get_text(" ", strip=True) for n in (title, body) if n)
+            if not text:
                 continue
 
-            # Assign to the corresponding lists
-            if lewis_split == "TRAIN":
-                train_texts.append(full_text)
-                train_labels.append(first_label)
-            elif lewis_split == "TEST":
-                test_texts.append(full_text)
-                test_labels.append(first_label)
+            texts, labels = split[part]
+            texts.append(text)
+            labels.append(first.get_text(strip=True))
 
-    return train_texts, train_labels, test_texts, test_labels
-
-# --- Usage example ---
-if __name__ == "__main__":
-    # Assuming you extracted the zip into a folder called 'reuters_data'
-    data_path = "./reuters_data" 
-    
-    X_train, y_train, X_test, y_test = load_reuters_dataset(data_path)
-    
-    print(f"Training documents: {len(X_train)}")
-    print(f"Test documents: {len(X_test)}")
-    print(f"Example of extracted class: {y_train[0]}")
+    return (*split["TRAIN"], *split["TEST"])

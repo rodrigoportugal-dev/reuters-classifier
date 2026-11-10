@@ -1,90 +1,65 @@
+"""Document parameterization: Binary, TF and TF-IDF.
+
+Vectors are sparse: each document is a ``dict {feature_index: value}`` that only
+stores the words it contains. The original version stored a dense list with one
+entry per vocabulary word (~30,000), which made every saved model 40-55 MB.
+"""
+
 import math
 from collections import Counter
 
+from src.preprocessing import get_tokenizer
+
+METHODS = ("binary", "tf", "tfidf")
+
+
 class TextVectorizer:
-    def __init__(self, method="tf"):
-        """
-        Initializes the vectorizer.
-        :param method: Parameterization algorithm to use. 
-                       Valid options: 'binary', 'tf', 'tfidf'
-        """
-        if method not in ["binary", "tf", "tfidf"]:
-            raise ValueError("Method must be 'binary', 'tf', or 'tfidf'")
-        
+    def __init__(self, method="tfidf", tokenizer="clean"):
+        if method not in METHODS:
+            raise ValueError(f"Method must be one of {METHODS}, got '{method}'")
         self.method = method
+        self.tokenizer = tokenizer
         self.vocabulary = {}
-        self.vocab_size = 0
-        self.document_frequencies = {} # How many docs contain the word 't'
-        self.total_docs = 0
         self.idf = {}
 
+    @property
+    def vocab_size(self):
+        return len(self.vocabulary)
+
+    def _tokens(self, text):
+        return get_tokenizer(self.tokenizer)(text)
+
     def fit(self, raw_documents):
-        """
-        Builds the vocabulary from the training documents.
-        """
-        self.total_docs = len(raw_documents)
-        all_words = set()
-        
+        doc_freq = Counter()
         for doc in raw_documents:
-            # Convert to lowercase and split by spaces (basic tokenization)
-            words = doc.lower().split()
-            unique_words_in_doc = set(words)
-            
-            # For IDF calculation: count in how many different documents each word appears
-            for word in unique_words_in_doc:
-                self.document_frequencies[word] = self.document_frequencies.get(word, 0) + 1
-                
-            # Add words to the global set
-            all_words.update(unique_words_in_doc)
-            
-        # Assign a numeric index to each unique word (alphabetically sorted)
-        self.vocabulary = {word: idx for idx, word in enumerate(sorted(all_words))}
-        self.vocab_size = len(self.vocabulary)
-        
-        # If the method is TF-IDF, precalculate IDF values to save time later
-        if self.method == "tfidf":
-            for word, doc_freq in self.document_frequencies.items():
-                # Standard IDF formula: log( N / df )
-                self.idf[word] = math.log(self.total_docs / float(doc_freq))
+            doc_freq.update(set(self._tokens(doc)))
+
+        self.vocabulary = {word: i for i, word in enumerate(sorted(doc_freq))}
+
+        # IDF(t) = log(N / df(t)), indexed by feature number
+        n_docs = len(raw_documents)
+        self.idf = {self.vocabulary[w]: math.log(n_docs / df) for w, df in doc_freq.items()}
+        return self
 
     def transform(self, raw_documents):
-        """
-        Transforms a list of texts into a list of numeric vectors using the learned vocabulary.
-        """
         vectors = []
         for doc in raw_documents:
-            words = doc.lower().split()
-            word_counts = Counter(words)
-            
-            # Initialize a vector of zeros the size of our vocabulary
-            vector = [0.0] * self.vocab_size
-            
-            for word, count in word_counts.items():
-                # Only process the word if we saw it during training (fit)
-                if word in self.vocabulary:
-                    idx = self.vocabulary[word]
-                    
-                    # 1. Binary: 1 if it appears, 0 if not
-                    if self.method == "binary":
-                        vector[idx] = 1.0
-                        
-                    # 2. Term Frequency (TF): Absolute frequency
-                    elif self.method == "tf":
-                        vector[idx] = float(count)
-                        
-                    # 3. TF-IDF: Frequency * Inverse Document Frequency
-                    elif self.method == "tfidf":
-                        tf = float(count)
-                        vector[idx] = tf * self.idf.get(word, 0.0)
-            
-            vectors.append(vector)
-            
+            counts = Counter(self._tokens(doc))
+            vec = {}
+            for word, count in counts.items():
+                idx = self.vocabulary.get(word)
+                if idx is None:  # word not seen during training
+                    continue
+                if self.method == "binary":
+                    value = 1.0
+                elif self.method == "tf":
+                    value = float(count)
+                else:  # tfidf
+                    value = count * self.idf[idx]
+                if value > 0:
+                    vec[idx] = value
+            vectors.append(vec)
         return vectors
 
     def fit_transform(self, raw_documents):
-        """
-        Learns the vocabulary and transforms the texts in a single step.
-        """
-        self.fit(raw_documents)
-        return self.transform(raw_documents)
-    
+        return self.fit(raw_documents).transform(raw_documents)

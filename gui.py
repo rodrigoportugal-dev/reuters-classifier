@@ -1,75 +1,55 @@
-import tkinter as tk
-from tkinter import messagebox
-import pickle
+"""Desktop GUI (Tkinter) to classify text with a saved model."""
+
 import os
+import tkinter as tk
+
+from src.model import TextClassificationModel
+
+EXAMPLE = (
+    "The technology giant announced today that it has agreed to acquire the smaller "
+    "software startup for 500 million dollars in cash. The merger and takeover process "
+    "is expected to close next month."
+)
+
 
 def start_gui(model_name):
-    model_path = f"models/{model_name}.pkl"
-    
-    # 1. Check if the model exists
-    if not os.path.exists(model_path):
-        print(f"Error: Model not found at {model_path}.")
-        print("Make sure you typed the name correctly or trained it first.")
+    path = f"models/{model_name}.pkl"
+    if not os.path.exists(path):
+        print(f"Model not found: {path}. Train it first with main.py (see README).")
         return
 
-    # 2. Load the saved model (.pkl)
-    print(f"Loading model '{model_name}'...")
-    with open(model_path, "rb") as f:
-        model_data = pickle.load(f)
-        
-    vectorizer = model_data['vectorizer']
-    classifier = model_data['classifier']
-    param_algo = model_data['param_algo']
-    class_algo = model_data['class_algo']
+    model = TextClassificationModel.load(path)
 
-    # 3. Configure the main window (Tkinter)
     root = tk.Tk()
-    root.title(f"Reuters Classifier - Model: {model_name}")
-    root.geometry("600x550")
-    
-    # Top information labels
-    info_text = f"Vectorizer: {param_algo.upper()} | Classifier: {class_algo.upper()}"
-    info_label = tk.Label(root, text=info_text, font=("Helvetica", 10, "italic"), fg="gray")
-    info_label.pack(pady=10)
+    root.title(f"Reuters classifier · {model_name}")
+    root.geometry("640x560")
 
-    instruction_label = tk.Label(root, text="Type or paste a news article in English:", font=("Helvetica", 12, "bold"))
-    instruction_label.pack(pady=5)
+    tk.Label(
+        root,
+        text=f"Features: {model.parameterization.upper()}  ·  Classifier: {model.classifier_name}",
+        font=("Helvetica", 10, "italic"), fg="gray",
+    ).pack(pady=(12, 4))
+    tk.Label(root, text="Type or paste a news article in English:", font=("Helvetica", 12, "bold")).pack()
 
-    # Text box for the user to type
-    text_input = tk.Text(root, height=15, width=65, font=("Helvetica", 10))
-    text_input.pack(pady=10)
+    text_input = tk.Text(root, height=14, width=70, font=("Helvetica", 10), wrap="word")
+    text_input.insert("1.0", EXAMPLE)
+    text_input.pack(pady=10, padx=12)
 
-    # Label where the result will be displayed
-    result_label = tk.Label(root, text="Prediction: ---", font=("Helvetica", 16, "bold"), fg="blue")
+    result = tk.Label(root, text="", font=("Helvetica", 15, "bold"))
+    detail = tk.Label(root, text="", font=("Helvetica", 10), fg="gray", justify="left")
 
-    # Function executed when the button is clicked
-    def classify_text():
-        user_text = text_input.get("1.0", tk.END).strip()
-        
-        if not user_text:
-            messagebox.showwarning("Empty text", "Please enter some text to classify.")
+    def classify():
+        text = text_input.get("1.0", tk.END).strip()
+        if not text:
+            result.config(text="Type some text first.", fg="#b45309")
+            detail.config(text="")
             return
-            
-        try:
-            # A. Convert text to numbers using the learned vocabulary
-            # (We put it in a list because transform expects a list of documents)
-            vectorized_text = vectorizer.transform([user_text])
-            
-            # B. Predict using the trained classifier
-            prediction = classifier.predict(vectorized_text)
-            predicted_class = prediction[0]
-            
-            # C. Show the result in the interface
-            result_label.config(text=f"Prediction: {predicted_class}", fg="green")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while predicting:\n{str(e)}")
+        top = model.explain(text)
+        result.config(text=f"Prediction: {top[0][0]}", fg="#15803d")
+        lines = [f"{label}: {score:.0%}" for label, score in top if score is not None]
+        detail.config(text="   ".join(lines))
 
-    # Classification button
-    classify_button = tk.Button(root, text="Classify News", font=("Helvetica", 12, "bold"), bg="black", fg="white", command=classify_text)
-    classify_button.pack(pady=15)
-
-    result_label.pack(pady=10)
-
-    # Start the application
+    tk.Button(root, text="Classify", font=("Helvetica", 12, "bold"), command=classify).pack(pady=6)
+    result.pack(pady=(10, 2))
+    detail.pack()
     root.mainloop()
