@@ -7,7 +7,7 @@ metrics **written from scratch in Python**. scikit-learn is used only to check t
 Seminar project for *Artificial Intelligence* (KIV/UIR-E) at the University of West Bohemia
 (Plzeň, Czech Republic), Erasmus+ 2025-26, later reworked and extended.
 
-**Live demo:** _coming soon_ · [Results](results/RESULTS.md) · [Original report](docs/User_Doc.pdf)
+**[▶ Live demo](https://reuters-classifier-rodrigo.streamlit.app/)** · [Results](results/RESULTS.md) · [Original report](docs/User_Doc.pdf)
 
 ## What it does
 
