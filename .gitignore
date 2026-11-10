@@ -1,0 +1,10 @@
+# Dataset (se descarga con scripts/download_data.py)
+data/
+# Modelos entrenados
+models/
+*.pkl
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
