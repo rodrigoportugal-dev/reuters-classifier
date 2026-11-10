@@ -1,0 +1,132 @@
+{
+  "ours": {
+    "basic|binary|min_dist": {
+      "accuracy": 0.7174202127659575,
+      "macro_f1": 0.35191358301936887,
+      "seconds": 3.156861300005403
+    },
+    "basic|binary|naive_bayes": {
+      "accuracy": 0.7519946808510638,
+      "macro_f1": 0.09139182214853808,
+      "seconds": 3.478579099995841
+    },
+    "basic|binary|knn": {
+      "accuracy": 0.824468085106383,
+      "macro_f1": 0.3907390828884146,
+      "seconds": 62.80946060000133
+    },
+    "basic|tf|min_dist": {
+      "accuracy": 0.5033244680851063,
+      "macro_f1": 0.20299108048487202,
+      "seconds": 3.146493100000953
+    },
+    "basic|tf|naive_bayes": {
+      "accuracy": 0.777593085106383,
+      "macro_f1": 0.12432792780902092,
+      "seconds": 3.0432770000043092
+    },
+    "basic|tf|knn": {
+      "accuracy": 0.7543218085106383,
+      "macro_f1": 0.3769176773620681,
+      "seconds": 62.16766769999958
+    },
+    "basic|tfidf|min_dist": {
+      "accuracy": 0.7606382978723404,
+      "macro_f1": 0.43520075877519737,
+      "seconds": 3.401282500002708
+    },
+    "basic|tfidf|naive_bayes": {
+      "accuracy": 0.8291223404255319,
+      "macro_f1": 0.4107755756634969,
+      "seconds": 3.226071700002649
+    },
+    "basic|tfidf|knn": {
+      "accuracy": 0.789561170212766,
+      "macro_f1": 0.5076555887902086,
+      "seconds": 62.77206750000187
+    },
+    "clean|binary|min_dist": {
+      "accuracy": 0.8021941489361702,
+      "macro_f1": 0.3888478588090002,
+      "seconds": 2.474663300003158
+    },
+    "clean|binary|naive_bayes": {
+      "accuracy": 0.784906914893617,
+      "macro_f1": 0.1604955530869188,
+      "seconds": 2.3592455000034533
+    },
+    "clean|binary|knn": {
+      "accuracy": 0.8297872340425532,
+      "macro_f1": 0.4026519729204732,
+      "seconds": 20.15815940000175
+    },
+    "clean|tf|min_dist": {
+      "accuracy": 0.7054521276595744,
+      "macro_f1": 0.3732303814613522,
+      "seconds": 2.320935700001428
+    },
+    "clean|tf|naive_bayes": {
+      "accuracy": 0.8214760638297872,
+      "macro_f1": 0.2529226998413433,
+      "seconds": 2.351125699999102
+    },
+    "clean|tf|knn": {
+      "accuracy": 0.8214760638297872,
+      "macro_f1": 0.447412485536353,
+      "seconds": 20.326052000003983
+    },
+    "clean|tfidf|min_dist": {
+      "accuracy": 0.7779255319148937,
+      "macro_f1": 0.44827548475972495,
+      "seconds": 2.8115757999985362
+    },
+    "clean|tfidf|naive_bayes": {
+      "accuracy": 0.8394281914893617,
+      "macro_f1": 0.4560809372945079,
+      "seconds": 2.7107909999976982
+    },
+    "clean|tfidf|knn": {
+      "accuracy": 0.7752659574468085,
+      "macro_f1": 0.5102307728479561,
+      "seconds": 20.143129399999452
+    }
+  },
+  "sklearn": {
+    "binary|min_dist": {
+      "accuracy": 0.8021941489361702,
+      "macro_f1": 0.3888478588090002
+    },
+    "binary|naive_bayes": {
+      "accuracy": 0.784906914893617,
+      "macro_f1": 0.1604955530869188
+    },
+    "binary|knn": {
+      "accuracy": 0.8228058510638298,
+      "macro_f1": 0.3293885243715805
+    },
+    "tf|min_dist": {
+      "accuracy": 0.7054521276595744,
+      "macro_f1": 0.3732303814613522
+    },
+    "tf|naive_bayes": {
+      "accuracy": 0.8214760638297872,
+      "macro_f1": 0.25292269984134336
+    },
+    "tf|knn": {
+      "accuracy": 0.8151595744680851,
+      "macro_f1": 0.4124526225762712
+    },
+    "tfidf|min_dist": {
+      "accuracy": 0.7646276595744681,
+      "macro_f1": 0.4429885328670938
+    },
+    "tfidf|naive_bayes": {
+      "accuracy": 0.8457446808510638,
+      "macro_f1": 0.458532072631037
+    },
+    "tfidf|knn": {
+      "accuracy": 0.7938829787234043,
+      "macro_f1": 0.49195223806879484
+    }
+  }
+}
